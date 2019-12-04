@@ -150,6 +150,7 @@ int __cdecl main(void)
 	// 3. Use prespective transform to calculate the desired pose of the arm.
 
 	// 4. Move the arm to the grasping pose by sendCommand() function.
+    
 	// The following lines give an example of how to send a command.
 	// You can find commends in "Robot Arm Manual.pdf"
 	char command[] = "GOHOME";
