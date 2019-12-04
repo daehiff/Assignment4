@@ -15,6 +15,8 @@
 // Need to link with Ws2_32.lib
 #pragma comment (lib, "Ws2_32.lib")
 
+#include "get_centroids.cpp"
+
 #define DEFAULT_BUFLEN 512
 #define DEFAULT_PORT "4000"
 
@@ -142,20 +144,57 @@ int __cdecl main(void)
     closesocket(ListenSocket);
 	
 	//========== Add your code below ==========//
+
+    // Get these from calibration (it would be nice to have them not hardcoded):
+    double f_x = 1208.0, f_y = 1212.0, c_x = 798.0, c_y = 595.4;
+    double k_1 = 0.1013, k_2 = -0.0944, k_3 = -0.1801;
+    double p_1 = 0, p_2 = 0;
+    Mat cameraMat = (Mat_<double>(3,3) << f_x, 0, f_y, 0, c_x, c_y, 0, 0, 1);
+    Mat distCoeffs = (Mat_<double>(5,1) << k_1, k_2, p_1, p_2, k_3);
 	
-	// 1. Read the camera frames and open a window to show it.
 
-	// 2. Segment the object(s) and calculate the centroid(s) and principle angle(s).
 
-	// 3. Use prespective transform to calculate the desired pose of the arm.
+	// === 1. Read the camera frames and open a window to show it.
 
-	// 4. Move the arm to the grasping pose by sendCommand() function.
+    // [note] wtf we don't know yet
+    // <camera somehow> -> cameraFrame
+
+
+
+	// === 2. Segment the object(s) and calculate the centroid(s) and principle angle(s).
+
+    Mat undistorted;
+    undistort(cameraFrame, undistorted, cameraMat, distCoeffs);
+    imshow("Undistorted frame from camera", undistorted); // debug display
+
+    workImage = cameraFrame.clone();
+    // get all relevant areas and perform a pca on them
+    vector<tuple<double, double, double>> centroids;
+    get_centroids(workImage, &centroids);
     
+    cout << "Resulting centroid(s), principle angle(s):" << endl;
+    for (tuple<double, double, double> ctr: centroids) {
+        cout << get<0>(ctr) << " " << get<1>(ctr) << " " << get<2>(ctr) << " " << endl;
+    }
+
+
+
+	// === 3. Use prespective transform to calculate the desired pose of the arm.
+
+    // [note] David will include his magic✨🦄 code here to get
+    //        from camera frame to the world frame
+
+
+
+	// === 4. Move the arm to the grasping pose by sendCommand() function.
+
 	// The following lines give an example of how to send a command.
 	// You can find commends in "Robot Arm Manual.pdf"
 	char command[] = "GOHOME";
 	sendCommand(command, ClientSocket);
 	
+
+
 	// 5. Control the gripper to grasp the object.
 	// The following lines give an example of how to control the gripper.
 	char closeGripper[] = "OUTPUT 48 ON";
