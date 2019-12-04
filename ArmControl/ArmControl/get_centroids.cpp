@@ -144,52 +144,52 @@ int get_centroids(cv::Mat workImage, vector<tuple<double, double, double>> *cent
 }
 
 
-int main(int argc, char **argv) {
-    int c;
-    string path;
-    cv::Mat workImage, srcImage, colorImg;
-    vector<vector<tuple<int, int>>> *areas;
+// int main(int argc, char **argv) {
+//     int c;
+//     string path;
+//     cv::Mat workImage, srcImage, colorImg;
+//     vector<vector<tuple<int, int>>> *areas;
 
-    // parsing sysargs
-    while ((c = getopt(argc, argv, "p:h")) != -1)
-        switch (c) {
-            case 'p':
-                path = optarg;
-                break;
-            case 'h':
-                cout << "*** Binary Maschine Vision ***" << endl;
-                cout << "pass the path to your image with -p <path>" << endl;
-                return 1;
-            default:
-                perror("No path: use -h to get help");
-        }
+//     // parsing sysargs
+//     while ((c = getopt(argc, argv, "p:h")) != -1)
+//         switch (c) {
+//             case 'p':
+//                 path = optarg;
+//                 break;
+//             case 'h':
+//                 cout << "*** Binary Maschine Vision ***" << endl;
+//                 cout << "pass the path to your image with -p <path>" << endl;
+//                 return 1;
+//             default:
+//                 perror("No path: use -h to get help");
+//         }
 
-    if (path.empty()) {
-        cerr << "Path not provided";
-        return 1;
-    }
+//     if (path.empty()) {
+//         cerr << "Path not provided";
+//         return 1;
+//     }
 
-    cout << "Performing analysis for image: " << path << endl;
-    srcImage = cv::imread(path, 0);
-    if (!srcImage.data) {
-        perror("Could not load image:");
-        exit(1);
-    }
-    cv::cvtColor(srcImage, colorImg, cv::COLOR_GRAY2RGB);
-    cv::namedWindow("Output", cv::WINDOW_AUTOSIZE);
+//     cout << "Performing analysis for image: " << path << endl;
+//     srcImage = cv::imread(path, 0);
+//     if (!srcImage.data) {
+//         perror("Could not load image:");
+//         exit(1);
+//     }
+//     cv::cvtColor(srcImage, colorImg, cv::COLOR_GRAY2RGB);
+//     cv::namedWindow("Output", cv::WINDOW_AUTOSIZE);
 
 
-    workImage = srcImage.clone();
+//     workImage = srcImage.clone();
 
-    // get all relevant areas and perform a pca on them
-    cout << "Resulting centroid(s), principle angle(s):" << endl;
-    vector<tuple<double, double, double>> centroids;
-    get_centroids(workImage, &centroids);
-    for (tuple<double, double, double> ctr: centroids) {
-        cout << get<0>(ctr) << " " << get<1>(ctr) << " " << get<2>(ctr) << " " << endl;
-    }
+//     // get all relevant areas and perform a pca on them
+//     cout << "Resulting centroid(s), principle angle(s):" << endl;
+//     vector<tuple<double, double, double>> centroids;
+//     get_centroids(workImage, &centroids);
+//     for (tuple<double, double, double> ctr: centroids) {
+//         cout << get<0>(ctr) << " " << get<1>(ctr) << " " << get<2>(ctr) << " " << endl;
+//     }
 
-    //cv::imshow("Output", colorImg);
-    //cv::waitKey();
-    return 0;
-}
+//     //cv::imshow("Output", colorImg);
+//     //cv::waitKey();
+//     return 0;
+// }
