@@ -14,12 +14,12 @@
 #define PI 3.141592653589793238463
 using namespace std;
 
-typedef unordered_map<unsigned long, bool> THashMap;
+typedef unordered_map<string, bool> THashMap;
 
-unsigned long coords_to_hash(int a, int b) {
+string coords_to_hash(int a, int b) {
     assert(a >= 0 && b >= 0);
     // Szudzik's function
-    return a >= b ? a * a + a + b : a + b * b; // where a, b >= 0
+    return to_string(a) + " " + to_string(b);
 
 }
 
@@ -106,7 +106,7 @@ vector<vector<tuple<int, int>>> *get_areas(cv::Mat image) {
     for (int i = 0; i < image.rows; ++i) {
         for (int j = 0; j < image.cols; ++j) {
             int intensity = image.at<uchar>(i, j);
-            const unsigned long key = coords_to_hash(i, j);
+            const string key = coords_to_hash(i, j);
             if (intensity != 0) {
                 if (vc->at(key)) {
                     vector<tuple<int, int>> *area = discover_area(image, make_tuple(i, j), vc);
