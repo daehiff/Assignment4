@@ -17,8 +17,6 @@ using namespace std;
 typedef unordered_map<string, bool> THashMap;
 
 string coords_to_hash(int a, int b) {
-    assert(a >= 0 && b >= 0);
-    // Szudzik's function
     return to_string(a) + " " + to_string(b);
 
 }
