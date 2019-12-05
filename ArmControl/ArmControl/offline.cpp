@@ -1,13 +1,17 @@
 #include <iostream>
 #include <stdlib.h>
 
+#include "perspective_transformation.cpp"
 #include "opencv2/opencv.hpp"
 #include "img_processing.cpp"
 
 using namespace std;
 using namespace cv;
 
+
 int main(int argc, char **argv) {
+    perform_perpective_transformation(make_tuple(1, 0), 0.1);
+    return 0;
     // Get camera frame
     VideoCapture camera = init_camera(0);
     Mat frame = get_camera_frame(camera);
