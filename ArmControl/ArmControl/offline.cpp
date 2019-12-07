@@ -8,9 +8,36 @@
 using namespace std;
 using namespace cv;
 
+/**
+ * super ugly brute force way in order to test varius configurations
+ */
+void test_p_transform() {
+    for (int i = 0; i < 10000; i += 100) {
+        for (int j = 0; j < 10000; j += 100) {
+            for (int k = 0; k < 10000; k += 100) {
+                for (int l = 0; l < 180; l += 5) {
+                    for (int m = 0; m < 180; m += 5) {
+                        for (int n = 0; n < 180; n += 5) {
+                            cout << i << " " << j << " " << " " << k << " "
+                                 << l << " " << m << " " << n << endl;
+                            workspace ws;
+                            prepare_workspace(i, j, k, l, m, n, &ws);
+                            auto position = perform_perpective_transformation(make_tuple(1, 100), 0.1, ws);
+                            cout << get<0>(position) << " " << get<1>(position) << " " << get<2>(position) << endl;
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
 
 int main(int argc, char **argv) {
-    perform_perpective_transformation(make_tuple(1, 0), 0.1);
+    workspace ws;
+    prepare_workspace(0, 0, 0, 0, 0, 45, &ws);
+    auto position = perform_perpective_transformation(make_tuple(1, 100), 0.1, ws);
+    cout << get<0>(position) << " " << get<1>(position) << " " << get<2>(position) << endl;
+    test_p_transform();
     return 0;
     // Get camera frame
     VideoCapture camera = init_camera(0);
@@ -48,3 +75,5 @@ int main(int argc, char **argv) {
 
     return 0;
 }
+
+
