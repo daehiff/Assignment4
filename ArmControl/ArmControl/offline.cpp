@@ -12,9 +12,9 @@ using namespace cv;
  * super ugly brute force way in order to test varius configurations
  */
 void test_p_transform() {
-    for (int i = 0; i < 10000; i += 100) {
-        for (int j = 0; j < 10000; j += 100) {
-            for (int k = 0; k < 10000; k += 100) {
+    for (int i = 0; i < 1000; i += 100) {
+        for (int j = 0; j < 1000; j += 100) {
+            for (int k = 0; k < 1000; k += 100) {
                 for (int l = 0; l < 180; l += 5) {
                     for (int m = 0; m < 180; m += 5) {
                         for (int n = 0; n < 180; n += 5) {
