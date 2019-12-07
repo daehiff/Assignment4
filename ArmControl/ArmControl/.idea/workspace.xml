@@ -12,10 +12,7 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="b8672410-aa43-46f4-849b-3e2ab61825d2" name="Default Changelist" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/cmake-build-debug/hw4" beforeDir="false" afterPath="$PROJECT_DIR$/cmake-build-debug/hw4" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/offline.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/offline.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/perspective_transformation.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/perspective_transformation.cpp" afterDir="false" />
     </list>
     <ignored path="$PROJECT_DIR$/cmake-build-debug/" />
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
@@ -42,11 +39,11 @@
           </provider>
         </entry>
       </file>
-      <file pinned="false" current-in-tab="false">
+      <file pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/offline.cpp">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="363">
-              <caret line="37" column="53" selection-start-line="37" selection-start-column="20" selection-end-line="37" selection-end-column="53" />
+            <state relative-caret-position="390">
+              <caret line="36" selection-start-line="36" selection-end-line="36" />
               <folding>
                 <element signature="e#0#19#0" expanded="true" />
               </folding>
@@ -54,10 +51,10 @@
           </provider>
         </entry>
       </file>
-      <file pinned="false" current-in-tab="true">
+      <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/perspective_transformation.cpp">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="329">
+            <state relative-caret-position="641">
               <caret line="96" column="39" selection-start-line="96" selection-start-column="39" selection-end-line="96" selection-end-column="39" />
               <folding>
                 <element signature="e#206#224#0" expanded="true" />
@@ -106,8 +103,8 @@
       <list>
         <option value="$PROJECT_DIR$/CMakeLists.txt" />
         <option value="$PROJECT_DIR$/get_centroids.cpp" />
-        <option value="$PROJECT_DIR$/offline.cpp" />
         <option value="$PROJECT_DIR$/perspective_transformation.cpp" />
+        <option value="$PROJECT_DIR$/offline.cpp" />
       </list>
     </option>
   </component>
@@ -193,12 +190,12 @@
       <workItem from="1575539561922" duration="6429000" />
       <workItem from="1575548247928" duration="3529000" />
       <workItem from="1575614786877" duration="744000" />
-      <workItem from="1575694840444" duration="3169000" />
+      <workItem from="1575694840444" duration="3441000" />
     </task>
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="14954000" />
+    <option name="totallyTimeSpent" value="15226000" />
   </component>
   <component name="ToolWindowManager">
     <frame x="0" y="0" width="1440" height="900" extended-state="0" />
@@ -236,7 +233,7 @@
       <breakpoints>
         <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
           <url>file://$PROJECT_DIR$/offline.cpp</url>
-          <line>60</line>
+          <line>55</line>
           <option name="timeStamp" value="3" />
         </line-breakpoint>
       </breakpoints>
@@ -334,22 +331,22 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/offline.cpp">
+    <entry file="file://$PROJECT_DIR$/perspective_transformation.cpp">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="363">
-          <caret line="37" column="53" selection-start-line="37" selection-start-column="20" selection-end-line="37" selection-end-column="53" />
+        <state relative-caret-position="641">
+          <caret line="96" column="39" selection-start-line="96" selection-start-column="39" selection-end-line="96" selection-end-column="39" />
           <folding>
-            <element signature="e#0#19#0" expanded="true" />
+            <element signature="e#206#224#0" expanded="true" />
           </folding>
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/perspective_transformation.cpp">
+    <entry file="file://$PROJECT_DIR$/offline.cpp">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="329">
-          <caret line="96" column="39" selection-start-line="96" selection-start-column="39" selection-end-line="96" selection-end-column="39" />
+        <state relative-caret-position="390">
+          <caret line="36" selection-start-line="36" selection-end-line="36" />
           <folding>
-            <element signature="e#206#224#0" expanded="true" />
+            <element signature="e#0#19#0" expanded="true" />
           </folding>
         </state>
       </provider>

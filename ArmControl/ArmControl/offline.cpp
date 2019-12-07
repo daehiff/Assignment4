@@ -33,12 +33,7 @@ void test_p_transform() {
 }
 
 int main(int argc, char **argv) {
-    workspace ws;
-    prepare_workspace(0, 0, 0, 0, 0, 45, &ws);
-    auto position = perform_perpective_transformation(make_tuple(1, 100), 0.1, ws);
-    cout << get<0>(position) << " " << get<1>(position) << " " << get<2>(position) << endl;
     test_p_transform();
-    return 0;
     // Get camera frame
     VideoCapture camera = init_camera(0);
     Mat frame = get_camera_frame(camera);
