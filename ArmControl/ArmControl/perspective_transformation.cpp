@@ -13,7 +13,7 @@
 #include <math.h>
 
 
-#define EPSILON 0.01
+#define EPSILON 0.001
 #define PI 3.141592653589793238463
 
 
@@ -37,9 +37,9 @@ int get_transformation_matrix(MatrixXd *trans_m, workspace ws) {
             0, sin(ws.r_th), cos(ws.r_th), 0,
             0, 0, 0, 1;
     MatrixXd m_y(4, 4);
-    m_y << cos(ws.r_psi), 0, -sin(ws.r_psi), 0,
+    m_y << cos(ws.r_psi), 0, sin(ws.r_psi), 0,
             0, 1, 0, 0,
-            sin(ws.r_psi), 0, cos(ws.r_psi), 0,
+            -sin(ws.r_psi), 0, cos(ws.r_psi), 0,
             0, 0, 0, 1;
     MatrixXd m_z(4, 4);
     m_z << cos(ws.r_phi), -sin(ws.r_phi), 0, 0,
@@ -52,9 +52,7 @@ int get_transformation_matrix(MatrixXd *trans_m, workspace ws) {
             0, 1, 0, ws.d_y,
             0, 0, 1, ws.d_z,
             0, 0, 0, 1;
-    MatrixXd rpy(4, 4);
-    rpy = m_x * m_y * m_z;
-    *trans_m = m_x * m_y * m_z * trans;
+    *trans_m = ((m_x * m_y) * m_z) * trans;
     return 0;
 }
 
@@ -81,7 +79,7 @@ tuple<double, double, double> perform_perpective_transformation(tuple<double, do
                                                                 workspace ws) {
     double p_i1 = get<0>(point_image);
     double p_i2 = get<1>(point_image);
-    double lambda = -ws.d_z;
+    double lambda = -(372.46118 + 229.69);
     MatrixXd p_c(4, 1);
     MatrixXd tmp(4, 1);
     MatrixXd t_cam_base(4, 4);
@@ -90,6 +88,9 @@ tuple<double, double, double> perform_perpective_transformation(tuple<double, do
             (p_i2 / f * (f - lambda)),
             (lambda),
             1;
+    cout << "P_c" << endl;
+    cout << p_c << endl;
+    cout << endl;
     assert(abs(-(f * p_c(0, 0)) / (p_c(2, 0) - f) - p_i1) < EPSILON); // retransformation for every coord must be fine
     assert(abs(-(f * p_c(1, 0)) / (p_c(2, 0) - f) - p_i2) < EPSILON);
     get_transformation_matrix(&t_cam_base, ws);
@@ -98,5 +99,6 @@ tuple<double, double, double> perform_perpective_transformation(tuple<double, do
     for (int i = 0; i < 4; ++i) {
         assert(abs(p_c(i, 0) - tmp(i, 0)) < EPSILON); // check if
     }
+    cout << p_b_c << endl;
     return make_tuple(p_b_c(0, 0), p_b_c(1, 0), p_b_c(2, 0));
 }

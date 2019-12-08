@@ -5,6 +5,16 @@
 #include "opencv2/opencv.hpp"
 #include "img_processing.cpp"
 
+#define CAM_X 30.747501
+#define CAM_Y 582.65411
+#define CAM_Z 372.46118  // we have a gripper lenght of 4cm => subtract 40 mm from position
+
+#define CAM_TH 0.0 // x
+#define CAM_PSI 0.0 //y
+#define CAM_PHI 180.0 //z
+
+#define K_X 0.55555
+
 using namespace std;
 using namespace cv;
 
@@ -12,28 +22,18 @@ using namespace cv;
  * super ugly brute force way in order to test varius configurations
  */
 void test_p_transform() {
-    for (int i = 0; i < 1000; i += 100) {
-        for (int j = 0; j < 1000; j += 100) {
-            for (int k = 0; k < 1000; k += 100) {
-                for (int l = 0; l < 180; l += 5) {
-                    for (int m = 0; m < 180; m += 5) {
-                        for (int n = 0; n < 180; n += 5) {
-                            cout << i << " " << j << " " << " " << k << " "
-                                 << l << " " << m << " " << n << endl;
-                            workspace ws;
-                            prepare_workspace(i, j, k, l, m, n, &ws);
-                            auto position = perform_perpective_transformation(make_tuple(1, 100), 0.1, ws);
-                            cout << get<0>(position) << " " << get<1>(position) << " " << get<2>(position) << endl;
-                        }
-                    }
-                }
-            }
-        }
-    }
+    workspace ws;
+    prepare_workspace(CAM_X, CAM_Y, CAM_Z, CAM_TH, CAM_PSI, CAM_PHI, &ws);
+    auto position = perform_perpective_transformation(make_tuple(K_X * (770 - 640.0), K_X * (345 - 480.0)), 1400.0,
+                                                      ws);
+    cout << get<0>(position) << " " << get<1>(position) << " " << get<2>(position) << endl;
+
 }
 
 int main(int argc, char **argv) {
+    cout << "LEts go!" << endl;
     test_p_transform();
+    return 0;
     // Get camera frame
     VideoCapture camera = init_camera(0);
     Mat frame = get_camera_frame(camera);
