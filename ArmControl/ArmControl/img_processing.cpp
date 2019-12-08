@@ -1,6 +1,5 @@
 #include <iostream>
 #include "opencv2/opencv.hpp"
-#include "get_centroids.cpp"
 
 using namespace std;
 using namespace cv;

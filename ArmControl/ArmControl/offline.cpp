@@ -1,45 +1,59 @@
 #include <iostream>
+#include <fstream>
 #include <stdlib.h>
 
 #include "opencv2/opencv.hpp"
 #include "img_processing.cpp"
+#include "get_centroids.cpp"
 
 using namespace std;
 using namespace cv;
 
 int main(int argc, char **argv) {
+    if (argc < 2) {
+        cerr << "usage: hw4 <camera_id>";
+        return 1;
+    }
+
+    // Read camera parameters from file
+    cout << "Reading camera parameters" << endl;
+    ifstream paramsFile;
+    paramsFile.open("camparams.txt");
+    if (!paramsFile) { cerr << "camparams.txt file is missing."; return 1; }
+    double f_x, f_y, c_x, c_y, k_1, k_2, p_1, p_2, k_3;
+    paramsFile >> f_x >> f_y >> c_x >> c_y >> k_1 >> k_2 >> p_1 >> p_2 >> k_3;
+
     // Get camera frame
-    VideoCapture camera = init_camera(0);
-    Mat frame = get_camera_frame(camera);
-    imshow("Original camera frame", frame); // debug
-    char c = (char) waitKey();
+    cout << "Connecting to camera..." << endl;
+    VideoCapture camera = init_camera(atoi(argv[1]));
+    waitKey(1000);
 
-    // Set camera distortion parameters
-    double f_x = 1208.0, f_y = 1212.0, c_x = 798.0, c_y = 595.4;
-    double k_1 = 0.1013, k_2 = -0.0944, k_3 = -0.1801;
-    double p_1 = 0, p_2 = 0;
-    Mat cameraMat = (Mat_<double>(3, 3) << f_x, 0, f_y, 0, c_x, c_y, 0, 0, 1);
-    Mat distCoeffs = (Mat_<double>(5, 1) << k_1, k_2, p_1, p_2, k_3);
+    while (true) {
+        Mat frame = get_camera_frame(camera);
 
-    // Undistort it
-    Mat undistorted_frame = undistort_camera_frame(frame, cameraMat, distCoeffs);
-    imshow("Undistorted camera frame", undistorted_frame); // debug
-    c = (char) waitKey();
+        // Set camera distortion parameters
+        Mat cameraMat = (Mat_<double>(3, 3) << f_x, 0, c_x, 0, f_y, c_y, 0, 0, 1);
+        Mat distCoeffs = (Mat_<double>(5, 1) << k_1, k_2, p_1, p_2, k_3);
 
-    // Get centroids
-    Mat work_image = undistorted_frame.clone();
-    // TODO check the channels and either convert the image or not
-    cv::cvtColor(work_image, work_image, cv::COLOR_BGR2GRAY);
+        // Undistort it
+        Mat undistorted_frame = undistort_camera_frame(frame, cameraMat, distCoeffs);
+        cvtColor(undistorted_frame, undistorted_frame, COLOR_BGR2GRAY);
+        imshow("Pre-processed camera frame", undistorted_frame); 
 
-    imshow("Original camera frame 1", work_image); // debug
-    waitKey();
+        // Get centroids
+        Mat work_image = undistorted_frame.clone();
+        vector<tuple<double, double, double>> centroids;
+        get_centroids(work_image, &centroids);
+        cvtColor(work_image, work_image, COLOR_GRAY2RGB);
 
-    vector<tuple<double, double, double>> centroids;
-    get_centroids(work_image, &centroids);
+        cout << "Resulting centroid(s), principle angle(s):" << endl;
+        for (tuple<double, double, double> ctr: centroids) {
+            cout << get<0>(ctr) << " " << get<1>(ctr) << " " << get<2>(ctr) << " " << endl;
+            cv::circle(work_image, Point(get<0>(ctr), get<1>(ctr)), 5, Scalar(0, 0, 255), 4);
+        }
 
-    cout << "Resulting centroid(s), principle angle(s):" << endl;
-    for (tuple<double, double, double> ctr: centroids) {
-        cout << get<0>(ctr) << " " << get<1>(ctr) << " " << get<2>(ctr) << " " << endl;
+        imshow("Results", work_image);
+        waitKey(1000);
     }
 
     return 0;
