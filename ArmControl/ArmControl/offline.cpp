@@ -48,8 +48,11 @@ int main(int argc, char **argv) {
 
         cout << "Resulting centroid(s), principle angle(s):" << endl;
         for (tuple<double, double, double> ctr: centroids) {
-            cout << get<0>(ctr) << " " << get<1>(ctr) << " " << get<2>(ctr) << " " << endl;
-            cv::circle(work_image, Point(get<0>(ctr), get<1>(ctr)), 5, Scalar(0, 0, 255), 4);
+            double x = get<0>(ctr), y = get<1>(ctr), angle = get<2>(ctr);
+            double angle_rad = angle * 0.01745;
+            cout << "[" << x << ", " << y << ", " << angle << "]" << endl;
+            cv::circle(work_image, Point(x, y), 5, Scalar(0, 0, 255), 4);
+            cv::line(work_image, Point(x, y), Point(x + sin(angle_rad) * 20, y + cos(angle_rad) * 20), Scalar(255, 0, 255), 1);
         }
 
         imshow("Results", work_image);
