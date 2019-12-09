@@ -108,7 +108,7 @@ vector<vector<tuple<int, int>>> *get_areas(cv::Mat image) {
             if (intensity != 0) {
                 if (vc->at(key)) {
                     vector<tuple<int, int>> *area = discover_area(image, make_tuple(i, j), vc);
-                    if (area->size() > 100) { // everything below 100 px is considered as noise
+                    if (area->size() > 1000) { // everything below 100 px is considered as noise
                         max_area->push_back(*area);
                     }
                 }
@@ -127,7 +127,7 @@ vector<vector<tuple<int, int>>> *get_areas(cv::Mat image) {
 
 int get_centroids(cv::Mat workImage, vector<tuple<double, double, double>> *centroids) {
     cv::GaussianBlur(workImage, workImage, cv::Size(3, 3), 0, 0);
-    cv::threshold(workImage, workImage, 128, 255, cv::THRESH_BINARY);
+    cv::threshold(workImage, workImage, 200, 255, cv::THRESH_BINARY);
     cv::erode(workImage, workImage, cv::Mat());
     cv::dilate(workImage, workImage, cv::Mat());
 
