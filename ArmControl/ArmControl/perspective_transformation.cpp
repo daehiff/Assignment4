@@ -98,7 +98,7 @@ void prepare_workspace(double x, double y, double z,
  * @param world_cord
  */
 void convert_to_pixels(cv::Matx21f *image_point, cv::Matx31f *world_cord, workspace *ws) {
-    double scaling_factor = -(372.46118 + 229.69 + 5.0); // Assume the image is 1mm below the sensor
+    double scaling_factor = -(372.46118 + 229.69);
     double x_im = (*image_point)(0, 0);
     double y_im = (*image_point)(0, 1);
     *world_cord << x_im, y_im, 1;
