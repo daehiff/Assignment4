@@ -5,7 +5,6 @@
 #include <stdio.h>
 #include <unordered_map>
 #include "opencv2/opencv.hpp"
-#include "Eigen/Dense"
 #include <opencv2/imgproc/imgproc.hpp>
 #include <assert.h>
 #include <stdlib.h>
@@ -24,7 +23,10 @@ typedef struct workspace {
     double r_th;  /* rotation around the x-axis (deg)*/
     double r_psi; /* rotation around the y-axis (deg)*/
     double r_phi; /*rotation around the z-axis (deg)*/
+    double sf_x; // scaling factor?
+    double sf_y;
     cv::Matx33f camera_matrix;
+    cv::Mat dist_coeffs;
 } workspace;
 
 
@@ -74,14 +76,20 @@ int get_transformation_matrix(cv::Matx44f *trans_m, workspace *ws) {
  */
 void prepare_workspace(double x, double y, double z,
                        double th, double psi, double phi,
-                       cv::Matx33f camera_matrix, workspace *ws) {
+                       double sf_x, double sf_y,
+                       cv::Matx33f camera_matrix, cv::Mat dist_coeffs,
+                       workspace *ws) {
     ws->d_x = x;
     ws->d_y = y;
     ws->d_z = z;
+    ws->sf_x = sf_x;
+    ws->sf_y = sf_y;
     ws->r_th = (th * PI / 180.0);
     ws->r_psi = (psi * PI / 180.0);
     ws->r_phi = (phi * PI / 180.0);
     ws->camera_matrix = camera_matrix;
+    ws->dist_coeffs = dist_coeffs;
+
 }
 
 /**
@@ -114,4 +122,11 @@ void perform_perpective_transformation(cv::Matx21f *image_point, cv::Matx31f *ro
     p_b_c << (world_cord(0, 0)), (world_cord(0, 1)), world_cord(0, 2), 1;
     p_b_c = trans_m * p_b_c;
     *robot_cords << p_b_c(0, 0), p_b_c(0, 1), p_b_c(0, 2);
+}
+
+
+void perform_perpective_transformation_1(cv::Matx12f *image_point, cv::Matx13f *world_point, workspace *ws) {
+    *world_point << (*image_point)(0, 0) * ws->sf_x + ws->d_x,
+            (*image_point)(0, 1) * ws->sf_y + ws->d_y,
+            ws->d_z;
 }
