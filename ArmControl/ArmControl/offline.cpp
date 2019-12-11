@@ -1,5 +1,6 @@
 #include <iostream>
 #include <stdlib.h>
+#include <iomanip>
 
 #include "perspective_transformation.cpp"
 #include "opencv2/opencv.hpp"
@@ -7,13 +8,17 @@
 
 #define CAM_X 30.747501
 #define CAM_Y 582.65411
-#define CAM_Z 372.46118  // we have a gripper lenght of 4cm => subtract 40 mm from position
+#define CAM_Z 372.46118
 
 #define CAM_TH 0.0 // x
 #define CAM_PSI 0.0 //y
-#define CAM_PHI 180.0 //z
+#define CAM_PHI 0.0 //z
 
-#define K_X 0.55555
+#define F_X 1.4002144943143016e+03
+#define F_Y 1.4031326269219808e+03
+#define C_X 6.4521582732650791e+02
+#define C_Y 4.6378737841255867e+02
+
 
 using namespace std;
 using namespace cv;
@@ -23,10 +28,37 @@ using namespace cv;
  */
 void test_p_transform() {
     workspace ws;
-    prepare_workspace(CAM_X, CAM_Y, CAM_Z, CAM_TH, CAM_PSI, CAM_PHI, &ws);
-    auto position = perform_perpective_transformation(make_tuple(K_X * (770 - 640.0), K_X * (345 - 480.0)), 1400.0,
-                                                      ws);
-    cout << get<0>(position) << " " << get<1>(position) << " " << get<2>(position) << endl;
+    cv::Matx33f camera_matrix(F_X, 0, C_X,
+                              0, F_Y, C_Y,
+                              0, 0, 1); // TODO @Marian do we should have it already and not hardcoded in here
+    prepare_workspace(CAM_X, CAM_Y, CAM_Z, CAM_TH, CAM_PSI, CAM_PHI, camera_matrix, &ws);
+    vector<vector<double>> image_vals = {
+            {0,       0},
+            {770,     345},
+            {422.431, 634.475},
+            {877.135, 625.746},
+            {643.138, 483.524},
+    };
+    vector<vector<double>> measured_output = {
+            {-342.222222, 271.6666667, -229},
+            {-54,         464,         -215},
+            {120,         589,         -220},
+            {-98,         594,         -212},
+            {15,          540,         -215},
+    };
+    // 1280.0, 345.0 / 960.0
+    for (int i = 0; i < image_vals.size(); ++i) {
+        cv::Matx31f position;
+        cv::Matx21f image_point(image_vals[i][0], image_vals[i][1]);
+        perform_perpective_transformation(&image_point, &position, &ws);
+        cout << image_vals[i][0] << ", " << image_vals[i][1] << ": "
+             << position(0, 0) << " " << position(0, 1) << " " << position(0, 2)
+             << endl;
+        cout << image_vals[i][0] << ", " << image_vals[i][1] << ": "
+             << (int) measured_output[i][0] << " " << (int) measured_output[i][1] << " " << (int) measured_output[i][2]
+             << endl;
+        cout << endl;
+    }
 
 }
 
