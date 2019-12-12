@@ -5,11 +5,7 @@
 using namespace std;
 using namespace cv;
 
-VideoCapture init_camera(int cameraID) {
-    VideoCapture inputCapture;
-    inputCapture.open(cameraID);
-    return inputCapture;
-}
+
 
 Mat get_camera_frame(VideoCapture camera) {
     Mat view;
@@ -17,13 +13,11 @@ Mat get_camera_frame(VideoCapture camera) {
     return view;
 }
 
-Mat undistort_camera_frame(Mat frame, Mat cameraMat, Mat distCoeffs) {
-    Mat undistorted;
-    undistort(frame, undistorted, cameraMat, distCoeffs);
-    return undistorted;
+void undistort_camera_frame(Mat *frame, Mat *undistorted, Matx33f *cameraMat, Mat *distCoeffs) {
+    undistort(*frame, *undistorted, *cameraMat, *distCoeffs);
 }
 
-bool measure_ground_squares(VideoCapture & camera, double * square_px, int square_size, Size board_size) {
+bool measure_ground_squares(VideoCapture &camera, double *square_px, int square_size, Size board_size) {
     const int chessBoardFlags = CALIB_CB_ADAPTIVE_THRESH | CALIB_CB_NORMALIZE_IMAGE | CALIB_CB_FAST_CHECK;
     int successfull_measures = 0;
     int repeats = 5;

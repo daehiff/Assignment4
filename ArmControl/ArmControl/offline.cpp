@@ -1,111 +1,184 @@
 #include <iostream>
-#include <fstream>
 #include <sstream>
 #include <stdlib.h>
+#include <iomanip>
+#include <fstream>
 
+#include "perspective_transformation.cpp"
 #include "opencv2/opencv.hpp"
 #include "img_processing.cpp"
 #include "get_centroids.cpp"
+#include "camera_helper.cpp"
 
 using namespace std;
 using namespace cv;
 
-#define REPEAT true
-#define CAMERA_FLIP true
-
-struct Vec2 {
-    double x;
-    double y;
-    Vec2(double new_x, double new_y) : x(new_x), y(new_y) { }
-};
-
-Vec2 transform_to_world_coords(Vec2 camera_coords, Vec2 scaling_factor, Vec2 camera_orig_wrld) {
-    return Vec2(
-        camera_coords.x * scaling_factor.x + camera_orig_wrld.x,
-        camera_coords.y * scaling_factor.y + camera_orig_wrld.y
-    );
+/**
+ * Method to get the objects centroids from the workspace
+ * @param camera
+ * @param centroids
+ * @param ws
+ * @param debug
+ */
+void get_centroids_from_camera(VideoCapture *camera, vector<tuple<double, double, double>> *centroids,
+                               workspace *ws = nullptr, Mat *result = nullptr) {
+    Mat frame, work_image;
+    *camera >> frame;
+    if (ws != nullptr) {
+        cv::undistort(frame, work_image, ws->camera_matrix, ws->dist_coeffs);
+    } else {
+        work_image = frame.clone();
+    }
+    cvtColor(work_image, work_image, COLOR_RGB2GRAY);
+    get_centroids(&work_image, centroids);
+    if (result != nullptr) {
+        cvtColor(work_image, work_image, COLOR_GRAY2RGB);
+        *result = work_image;
+    }
 }
 
-int main(int argc, char **argv) {
-    if (argc < 4) {
-        cerr << "usage: hw4 <camera_id> <orig_x> <orig_y> [ <scaling> ]";
+/**
+ * Routine with which we can calibrate the camera
+ * @param argc
+ * @param argv
+ * @return
+ */
+int camera_calibration(int argc, char **argv) {
+    workspace ws;
+    int cam_id = -1;
+    if (argc == 2) {
+        cam_id = atoi(argv[1]);
+        if (cam_id == -1) {
+            cerr << "Invalid Camera Id";
+            return 1;
+        }
+    } else {
+        cerr << "Please run with: <camera_id>";
         return 1;
     }
-
-    Vec2 camera_wrld_orig = Vec2(atof(argv[2]), atof(argv[3]));
-
-    // Read camera parameters from file
-    cout << "Reading camera parameters" << endl;
-    ifstream paramsFile;
-    paramsFile.open("camparams.txt");
-    if (!paramsFile) { cerr << "camparams.txt file is missing."; return 1; }
-    double f_x, f_y, c_x, c_y, k_1, k_2, p_1, p_2, k_3;
-    paramsFile >> f_x >> f_y >> c_x >> c_y >> k_1 >> k_2 >> p_1 >> p_2 >> k_3;
-
-    // Connect to camera
     cout << "Connecting to camera..." << endl;
-    VideoCapture camera = init_camera(atoi(argv[1]));
-    waitKey(1000);
-
-    // Get camera height
-    double sf_x, sf_y;
-    if (argc == 5) {
-        sf_x = atof(argv[4]);
-        sf_y = -sf_x;
-    } else {
-        double square_px;
-        const int square_size = 5;
-        bool measured = measure_ground_squares(camera, &square_px, square_size, Size(8,6));
-
-        if (measured) {
-            cout << square_size << "mm is ca. " << square_px << " pixels in camera space." << endl;
-        } else {
-            cerr << "Failed to measure the ground scaling." << endl;
-            return 2;
-        }
-
-        sf_y = square_size / square_px;
-        sf_x = -sf_y;
-    }
-    cout << "Scaling factor is [" << sf_x << ", " << sf_y << "]" << endl;
-    cout << "Assuming the camera origin [0, 0] is at [" <<
-        camera_wrld_orig.x << ", " << camera_wrld_orig.y << "] in robot space." << endl;
-
+    VideoCapture camera = init_camera(cam_id);
+    vector<cv::Vec2f> centroids;
+    vector<cv::Vec3f> real_world_coordinates;
     do {
-        Mat frame = get_camera_frame(camera);
-
-        // Set camera distortion parameters
-        Mat cameraMat = (Mat_<double>(3, 3) << f_x, 0, c_x, 0, f_y, c_y, 0, 0, 1);
-        Mat distCoeffs = (Mat_<double>(5, 1) << k_1, k_2, p_1, p_2, k_3);
-
-        // Undistort it
-        Mat undistorted_frame = undistort_camera_frame(frame, cameraMat, distCoeffs);
-        cvtColor(undistorted_frame, undistorted_frame, COLOR_BGR2GRAY);
-        imshow("Pre-processed camera frame", undistorted_frame); 
-        waitKey(500);
-
-        // Get centroids
-        Mat work_image = undistorted_frame.clone();
-        vector<tuple<double, double, double>> centroids;
-        get_centroids(work_image, &centroids);
-        cvtColor(work_image, work_image, COLOR_GRAY2RGB);
-
-        for (tuple<double, double, double> ctr: centroids) {
-            double x = get<0>(ctr), y = get<1>(ctr), angle = get<2>(ctr);
-            double angle_rad = angle * 0.01745; // precision? pfft!
-            cv::circle(work_image, Point(x, y), 5, Scalar(0, 0, 255), 4);
-            cv::line(work_image, Point(x, y), Point(x + sin(angle_rad) * 20, y + cos(angle_rad) * 20), Scalar(255, 0, 255), 1);
-            stringstream cc_str, wc_str;
-            Vec2 robotCoords = transform_to_world_coords(Vec2(x,y), Vec2(sf_x, sf_y), camera_wrld_orig);
-            cc_str << "[" << x << ", " << y << "]";
-            wc_str << "[" << robotCoords.x << ", " << robotCoords.y << "]";
-            cv::putText(work_image, cc_str.str().c_str(), Point(x + 15, y + 5), FONT_HERSHEY_SIMPLEX, 0.33, Scalar(0, 0, 255), 1);
-            cv::putText(work_image, wc_str.str().c_str(), Point(x + 15, y + 25), FONT_HERSHEY_SIMPLEX, 0.5, Scalar(0, 128, 255), 2);
+        while (true) {
+            cout << "Confirm Workspace Setup: " << endl;
+            string line;
+            getline(std::cin, line);
+            if (line == "y" || line == "Y") {
+                break;
+            }
         }
+        vector<tuple<double, double, double>> tmp_centroids;
+        Mat result;
+        get_centroids_from_camera(&camera, &tmp_centroids, nullptr, &result);
+        for (auto ctr: tmp_centroids) {
+            double px_x = get<0>(ctr);
+            double px_y = get<1>(ctr);
+            double angle = get<2>(ctr);
+            double x = -1, y = -1, z = -1;
+            Mat work_image = result.clone();
+            cout << "At Centroid: " << px_x << ", " << px_y << endl;
+            cv::circle(work_image, Point2f(px_x, px_y), 5, Scalar(0, 0, 255), 4);
+            cv::line(work_image, Point2f(px_x, px_y), Point(px_x + sin(angle) * 20, px_y + cos(angle) * 20),
+                     Scalar(255, 0, 255), 1);
+            stringstream cc_str, wc_str;
+            cv::putText(work_image, cc_str.str().c_str(),
+                        Point2f(px_x + 15, px_y + 5),
+                        FONT_HERSHEY_SIMPLEX, 0.33,
+                        Scalar(0, 0, 255), 1);
+            cv::putText(work_image, wc_str.str().c_str(),
+                        Point2f(px_x + 15, px_y + 25),
+                        FONT_HERSHEY_SIMPLEX, 0.5,
+                        Scalar(0, 128, 255), 2);
+            cout << "Look at the image and move the robot arm to the object then insert the real world coordinates"
+                 << endl;
+            imshow("Output", work_image);
+            waitKey();
+            while (true) {
+                cout << "Please insert real world coordinates as the following: x y z" << endl;
+                string line;
+                getline(std::cin, line);
+                stringstream ss(line);
+                ss >> x >> y >> z;
+                cout << "Confirm: " << x << " " << y << " " << z << " ";
+                getline(std::cin, line);
+                if (!(line == "y" || line == "Y")) {
+                    x = -1;
+                    y = -1;
+                    z = -1;
+                } else {
+                    break;
+                }
+            }
+            centroids.emplace_back(px_x, px_y);
+            real_world_coordinates.emplace_back(x, y, z);
+        }
+        cout << "Done! No more centroids found!" << endl;
+        cout << endl;
+    } while (centroids.size() <= 12);
 
-        imshow("Results", work_image);
-        waitKey(1000);
-    } while (REPEAT);
-
+    ofstream paramsFile;
+    paramsFile.open("./setupPoints.txt");
+    if (!paramsFile) {
+        cerr << "setupPoints.txt file is missing.";
+        return 1;
+    }
+    for (int i = 0; i < centroids.size(); ++i) {
+        paramsFile << "" << centroids[i](0) << " " << centroids[i](1) << "=>"
+                   << real_world_coordinates[i](0) << " "
+                   << real_world_coordinates[i](1) << " "
+                   << real_world_coordinates[i](0)
+                   << endl;
+    }
     return 0;
 }
+
+
+int main(int argc, char **argv) {
+    //return camera_calibration(argc, argv);
+    // getting parameters and prepare workspace
+    workspace ws;
+    double cam_id;
+    VideoCapture camera;
+
+    if (argc == 2) {
+        cam_id = atoi(argv[1]);
+        if (cam_id == -1) {
+            cerr << "Invalid: <camera_id>";
+            return 1;
+        }
+    } else {
+        cerr << "please provide: <camera_id>";
+        return 1;
+    }
+    cout << "Preparing Workspace" << endl;
+    if (prepare_workspace(&ws)) {
+        cerr << "Error preparing workspace";
+        return 1;
+    }
+    cout << "Getting Camera" << endl;
+    camera = init_camera(cam_id);
+    vector<tuple<double, double, double>> centroids;
+
+//    643.138 483.524 15.0 540.0 -215.0
+//    0.0 0.0 -342.222222 271.6666667 -215.0
+    vector<Vec2f> image_points = {
+            Vec2f(643.138, 483.524),
+            Vec2f(0.0, 0.0),
+    };
+    vector<Vec3f> world_points = {
+            Vec3f(15.0, 540.0, -215.0),
+            Vec3f(342.222222, 271.6666667, -215.0),
+    };
+    cout << ws.t_vec << endl;
+    for (int i = 0; i < 2; ++i) {
+        Vec3f room_vector;
+        perform_perspective_transformation(&image_points[i], &room_vector, &ws);
+        cout << room_vector << endl;
+        cout << world_points[i] << endl;
+    }
+    return 0;
+}
+
+

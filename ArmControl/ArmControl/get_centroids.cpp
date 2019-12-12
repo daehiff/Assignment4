@@ -9,16 +9,18 @@
 #include <assert.h>
 #include <stdlib.h>
 #include <unistd.h>
-
+#include <math.h>
 
 #define PI 3.141592653589793238463
+
 using namespace std;
 
-typedef unordered_map<string, bool> THashMap;
+typedef unordered_map<long long, bool> THashMap;
 
-string coords_to_hash(int a, int b) {
-    return to_string(a) + " " + to_string(b);
-
+long long coords_to_hash(int a, int b) {
+    long long a_ = a >= 0 ? 2 * a : -2 * a - 1;
+    long long b_ = b >= 0 ? 2 * b : -2 * b - 1;
+    return (a_ + b_) * (a_ + b_ + 1) / 2 + a_;
 }
 
 double get_central_moments(vector<tuple<int, int>> *max_area, cv::Point2f *centroid, int k, int j) {
@@ -68,18 +70,17 @@ THashMap *fill_map(int rows, int cols) {
 }
 
 
-vector<tuple<int, int>> *discover_area(cv::Mat image, tuple<int, int> seed, THashMap *vc) {
+void discover_area(cv::Mat *image, tuple<int, int> seed, THashMap *vc, vector<tuple<int, int>> *out_area) {
     queue<tuple<int, int>> img_area;
-    auto *out_area = new vector<tuple<int, int>>; // init on heap
     img_area.push(seed);
     while (!img_area.empty()) {
         auto tmp = img_area.front();
         int i = get<0>(tmp);
         int j = get<1>(tmp);
         img_area.pop();
-        if (i < image.rows && j < image.cols
+        if (i < image->rows && j < image->cols
             && vc->at(coords_to_hash(i, j))
-            && image.at<uchar>(i, j) == 255) {
+            && image->at<uchar>(i, j) == 255) {
             out_area->push_back(tmp);
             (*vc)[coords_to_hash(i, j)] = false;
             // insert all neighbors of tmp
@@ -94,22 +95,22 @@ vector<tuple<int, int>> *discover_area(cv::Mat image, tuple<int, int> seed, THas
         }
 
     }
-    return out_area;
 }
 
 
-vector<vector<tuple<int, int>>> *get_areas(cv::Mat image) {
-    auto *max_area = new vector<vector<tuple<int, int>>>;
-    auto *vc = fill_map(image.rows, image.cols);
-    for (int i = 0; i < image.rows; ++i) {
-        for (int j = 0; j < image.cols; ++j) {
-            int intensity = image.at<uchar>(i, j);
-            const string key = coords_to_hash(i, j);
+void get_areas(cv::Mat *image, vector<vector<tuple<int, int>>> *max_area) {
+    auto *vc = fill_map(image->rows, image->cols);
+    vector<tuple<int, int>> area;
+    for (int i = 0; i < image->rows; ++i) {
+        for (int j = 0; j < image->cols; ++j) {
+            int intensity = image->at<uchar>(i, j);
+            const long long key = coords_to_hash(i, j);
             if (intensity != 0) {
                 if (vc->at(key)) {
-                    vector<tuple<int, int>> *area = discover_area(image, make_tuple(i, j), vc);
-                    if (area->size() > 1000) { // everything below 100 px is considered as noise
-                        max_area->push_back(*area);
+                    area.clear();
+                    discover_area(image, make_tuple(i, j), vc, &area);
+                    if (area.size() > 1000) { // everything below 100 px is considered as noise
+                        max_area->push_back(area);
                     }
                 }
             } else {
@@ -122,72 +123,27 @@ vector<vector<tuple<int, int>>> *get_areas(cv::Mat image) {
 
         }
     }
-    return max_area;
 }
 
-int get_centroids(cv::Mat workImage, vector<tuple<double, double, double>> *centroids) {
-    cv::GaussianBlur(workImage, workImage, cv::Size(3, 3), 0, 0);
-    cv::threshold(workImage, workImage, 200, 255, cv::THRESH_BINARY);
-    cv::erode(workImage, workImage, cv::Mat());
-    cv::dilate(workImage, workImage, cv::Mat());
+/**
+ * From a grayscaled image perform a segmentation and them comput the centroid and PA of each segment
+ * @param workImage
+ * @param centroids
+ * @return
+ */
+int get_centroids(cv::Mat *workImage, vector<tuple<double, double, double>> *centroids) {
+    cv::GaussianBlur(*workImage, *workImage, cv::Size(3, 3), 0, 0);
+    cv::threshold(*workImage, *workImage, 200, 255, cv::THRESH_BINARY);
+    cv::erode(*workImage, *workImage, cv::Mat());
+    cv::dilate(*workImage, *workImage, cv::Mat());
+    vector<vector<tuple<int, int>>> areas;
 
-    auto areas = get_areas(workImage);
-    for (auto max_area: *areas) {
+    get_areas(workImage, &areas);
+    for (auto max_area: areas) {
         auto centroid = get_centoid(&max_area);
         double pa_angle_1 = get_pa_angle(&max_area, centroid);
-        auto tmp = new tuple<double, double, double>(centroid->x, centroid->y, pa_angle_1 * (180.0 / PI));
+        auto tmp = new tuple<double, double, double>(centroid->x, centroid->y, pa_angle_1);
         centroids->push_back(*tmp);
     }
     return 0;
 }
-
-
-// int main(int argc, char **argv) {
-//     int c;
-//     string path;
-//     cv::Mat workImage, srcImage, colorImg;
-//     vector<vector<tuple<int, int>>> *areas;
-
-//     // parsing sysargs
-//     while ((c = getopt(argc, argv, "p:h")) != -1)
-//         switch (c) {
-//             case 'p':
-//                 path = optarg;
-//                 break;
-//             case 'h':
-//                 cout << "*** Binary Maschine Vision ***" << endl;
-//                 cout << "pass the path to your image with -p <path>" << endl;
-//                 return 1;
-//             default:
-//                 perror("No path: use -h to get help");
-//         }
-
-//     if (path.empty()) {
-//         cerr << "Path not provided";
-//         return 1;
-//     }
-
-//     cout << "Performing analysis for image: " << path << endl;
-//     srcImage = cv::imread(path, 0);
-//     if (!srcImage.data) {
-//         perror("Could not load image:");
-//         exit(1);
-//     }
-//     cv::cvtColor(srcImage, colorImg, cv::COLOR_GRAY2RGB);
-//     cv::namedWindow("Output", cv::WINDOW_AUTOSIZE);
-
-
-//     workImage = srcImage.clone();
-
-//     // get all relevant areas and perform a pca on them
-//     cout << "Resulting centroid(s), principle angle(s):" << endl;
-//     vector<tuple<double, double, double>> centroids;
-//     get_centroids(workImage, &centroids);
-//     for (tuple<double, double, double> ctr: centroids) {
-//         cout << get<0>(ctr) << " " << get<1>(ctr) << " " << get<2>(ctr) << " " << endl;
-//     }
-
-//     //cv::imshow("Output", colorImg);
-//     //cv::waitKey();
-//     return 0;
-// }
