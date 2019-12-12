@@ -11,18 +11,16 @@
 #include <unistd.h>
 #include <math.h>
 
-
 #define PI 3.141592653589793238463
-
 
 using namespace std;
 
 typedef unordered_map<long long, bool> THashMap;
 
 long long coords_to_hash(int a, int b) {
-    long long A = a >= 0 ? 2 * a : -2 * a - 1;
-    long long B = b >= 0 ? 2 * b : -2 * b - 1;
-    return (A + B) * (A + B + 1) / 2 + A;
+    long long a_ = a >= 0 ? 2 * a : -2 * a - 1;
+    long long b_ = b >= 0 ? 2 * b : -2 * b - 1;
+    return (a_ + b_) * (a_ + b_ + 1) / 2 + a_;
 }
 
 double get_central_moments(vector<tuple<int, int>> *max_area, cv::Point2f *centroid, int k, int j) {
@@ -127,6 +125,12 @@ void get_areas(cv::Mat *image, vector<vector<tuple<int, int>>> *max_area) {
     }
 }
 
+/**
+ * From a grayscaled image perform a segmentation and them comput the centroid and PA of each segment
+ * @param workImage
+ * @param centroids
+ * @return
+ */
 int get_centroids(cv::Mat *workImage, vector<tuple<double, double, double>> *centroids) {
     cv::GaussianBlur(*workImage, *workImage, cv::Size(3, 3), 0, 0);
     cv::threshold(*workImage, *workImage, 200, 255, cv::THRESH_BINARY);

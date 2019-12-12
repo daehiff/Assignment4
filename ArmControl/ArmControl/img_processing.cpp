@@ -5,11 +5,7 @@
 using namespace std;
 using namespace cv;
 
-VideoCapture init_camera(int cameraID) {
-    VideoCapture inputCapture;
-    inputCapture.open(cameraID);
-    return inputCapture;
-}
+
 
 Mat get_camera_frame(VideoCapture camera) {
     Mat view;
