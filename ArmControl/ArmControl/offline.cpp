@@ -161,15 +161,15 @@ int main(int argc, char **argv) {
     camera = init_camera(cam_id);
     vector<tuple<double, double, double>> centroids;
 
-    //643.138 483.524 => 15.0 540.0 -215.0
-    //0.0 0.0 =>        -342.222222 271.6666667
+//    643.138 483.524 15.0 540.0 -215.0
+//    0.0 0.0 -342.222222 271.6666667 -215.0
     vector<Vec2f> image_points = {
             Vec2f(643.138, 483.524),
             Vec2f(0.0, 0.0),
     };
     vector<Vec3f> world_points = {
             Vec3f(15.0, 540.0, -215.0),
-            Vec3f(-342.222222, 271.6666667, -215.0),
+            Vec3f(342.222222, 271.6666667, -215.0),
     };
     cout << ws.t_vec << endl;
     for (int i = 0; i < 2; ++i) {
