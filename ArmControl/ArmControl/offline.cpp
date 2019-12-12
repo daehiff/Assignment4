@@ -12,24 +12,6 @@
 
 using namespace std;
 using namespace cv;
-/**
-      if (debug) {
-        for (tuple<double, double, double> ctr: *centroids) {
-            double x = get<0>(ctr), y = get<1>(ctr), angle = get<2>(ctr);
-            double angle_rad = angle; // precision? pfft! I converted it on deg, look into others code! :D
-            cv::circle(work_image, Point2f(x, y), 5, Scalar(0, 0, 255), 4);
-            cv::line(work_image, Point2f(x, y), Point(x + sin(angle_rad) * 20, y + cos(angle_rad) * 20),
-                     Scalar(255, 0, 255), 1);
-            stringstream cc_str, wc_str;
-            cv::putText(work_image, cc_str.str().c_str(), Point2f(x + 15, y + 5), FONT_HERSHEY_SIMPLEX, 0.33,
-                        Scalar(0, 0, 255), 1);
-            cv::putText(work_image, wc_str.str().c_str(), Point2f(x + 15, y + 25), FONT_HERSHEY_SIMPLEX, 0.5,
-                        Scalar(0, 128, 255), 2);
-        }
-        imshow("Output", work_image);
-        waitKey();
-    }
- */
 
 /**
  * Method to get the objects centroids from the workspace
@@ -154,7 +136,7 @@ int camera_calibration(int argc, char **argv) {
 
 
 int main(int argc, char **argv) {
-    return camera_calibration(argc, argv);
+    //return camera_calibration(argc, argv);
     // getting parameters and prepare workspace
     workspace ws;
     double cam_id;
@@ -179,13 +161,22 @@ int main(int argc, char **argv) {
     camera = init_camera(cam_id);
     vector<tuple<double, double, double>> centroids;
 
-    get_centroids_from_camera(&camera, &centroids, &ws);
-    for (auto ctr: centroids) {
+    //643.138 483.524 => 15.0 540.0 -215.0
+    //0.0 0.0 =>        -342.222222 271.6666667
+    vector<Vec2f> image_points = {
+            Vec2f(643.138, 483.524),
+            Vec2f(0.0, 0.0),
+    };
+    vector<Vec3f> world_points = {
+            Vec3f(15.0, 540.0, -215.0),
+            Vec3f(-342.222222, 271.6666667, -215.0),
+    };
+    cout << ws.t_vec << endl;
+    for (int i = 0; i < 2; ++i) {
         Vec3f room_vector;
-        Vec2f image_point(get<0>(ctr), get<1>(ctr));
-        perform_perspective_transformation(&image_point, &room_vector, &ws);
+        perform_perspective_transformation(&image_points[i], &room_vector, &ws);
         cout << room_vector << endl;
-        cout << image_point << endl;
+        cout << world_points[i] << endl;
     }
     return 0;
 }

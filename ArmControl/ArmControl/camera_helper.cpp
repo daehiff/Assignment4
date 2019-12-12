@@ -19,12 +19,8 @@ using namespace cv;
 
 
 typedef struct workspace {
-    double d_x;
-    double d_y;
-    double d_z;
-    double r_th;  /* rotation around the x-axis (deg) */
-    double r_psi; /* rotation around the y-axis (deg) */
-    double r_phi; /* rotation around the z-axis (deg) */
+    Matx33f r_mat;
+    Matx31f t_vec;
     cv::Matx33f camera_matrix;
     cv::Mat dist_coeffs;
 } workspace;
@@ -86,14 +82,13 @@ int prepare_workspace(workspace *ws) {
         object_points.emplace_back(Vec3f(x, y, z));
     }
     Matx31f r_vec;
+    Matx33f r_mat;
+
     Matx31f t_vec;
     solvePnP(object_points, image_points, camera_matrix, dist_coeffs, r_vec, t_vec);
-    ws->d_x = t_vec(0, 0);
-    ws->d_y = t_vec(0, 1);
-    ws->d_z = t_vec(0, 2);
-    ws->r_th = r_vec(0, 0);
-    ws->r_phi = r_vec(0, 1);
-    ws->r_psi = r_vec(0, 2);
+    Rodrigues(r_vec, r_mat);
+    ws->t_vec = t_vec;
+    ws->r_mat = r_mat;
     ws->dist_coeffs = dist_coeffs;
     ws->camera_matrix = camera_matrix;
     return 0;
