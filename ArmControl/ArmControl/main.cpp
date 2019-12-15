@@ -20,6 +20,7 @@
 #define DEFAULT_BUFLEN 512
 #define DEFAULT_PORT "4000"
 #define CAMERA_ID 0
+
 #define GRIPPER_CLOSE 0
 #define GRIPPER_OPEN 1
 
@@ -199,9 +200,6 @@ int __cdecl main(int argc, char **argv) {
 
     // No longer need server socket
     closesocket(ListenSocket);
-
-
-    // ---- Robot connected 
 
     // Connect to camera
     cout << "Connecting to camera..." << endl;

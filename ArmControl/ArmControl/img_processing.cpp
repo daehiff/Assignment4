@@ -42,10 +42,8 @@ Mat get_camera_frame(VideoCapture camera) {
     return view;
 }
 
-Mat undistort_camera_frame(Mat frame, Mat cameraMat, Mat distCoeffs) {
-    Mat undistorted;
-    undistort(frame, undistorted, cameraMat, distCoeffs);
-    return undistorted;
+void undistort_camera_frame(Mat *frame, Mat *undistorted, Matx33f *cameraMat, Mat *distCoeffs) {
+    undistort(*frame, *undistorted, *cameraMat, *distCoeffs);
 }
 
 Vec2 transform_to_world_coords(Vec2 camera_coords, Vec2 scaling_factor, Vec2 camera_orig_wrld) {

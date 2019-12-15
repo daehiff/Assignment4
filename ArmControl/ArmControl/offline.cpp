@@ -1,11 +1,14 @@
 #include <iostream>
-#include <fstream>
 #include <sstream>
 #include <stdlib.h>
+#include <iomanip>
+#include <fstream>
 
+#include "perspective_transformation.cpp"
 #include "opencv2/opencv.hpp"
 #include "img_processing.cpp"
 #include "get_centroids.cpp"
+#include "camera_helper.cpp"
 
 using namespace std;
 using namespace cv;
@@ -86,5 +89,50 @@ int main(int argc, char **argv) {
         waitKey(500);
     } while (REPEAT);
 
+int main(int argc, char **argv) {
+    //return camera_calibration(argc, argv);
+    // getting parameters and prepare workspace
+    workspace ws;
+    double cam_id;
+    VideoCapture camera;
+
+    if (argc == 2) {
+        cam_id = atoi(argv[1]);
+        if (cam_id == -1) {
+            cerr << "Invalid: <camera_id>";
+            return 1;
+        }
+    } else {
+        cerr << "please provide: <camera_id>";
+        return 1;
+    }
+    cout << "Preparing Workspace" << endl;
+    if (prepare_workspace(&ws)) {
+        cerr << "Error preparing workspace";
+        return 1;
+    }
+    cout << "Getting Camera" << endl;
+    camera = init_camera(cam_id);
+    vector<tuple<double, double, double>> centroids;
+
+//    643.138 483.524 15.0 540.0 -215.0
+//    0.0 0.0 -342.222222 271.6666667 -215.0
+    vector<Vec2f> image_points = {
+            Vec2f(643.138, 483.524),
+            Vec2f(0.0, 0.0),
+    };
+    vector<Vec3f> world_points = {
+            Vec3f(15.0, 540.0, -215.0),
+            Vec3f(342.222222, 271.6666667, -215.0),
+    };
+    cout << ws.t_vec << endl;
+    for (int i = 0; i < 2; ++i) {
+        Vec3f room_vector;
+        perform_perspective_transformation(&image_points[i], &room_vector, &ws);
+        cout << room_vector << endl;
+        cout << world_points[i] << endl;
+    }
     return 0;
 }
+
+
