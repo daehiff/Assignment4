@@ -13,9 +13,13 @@
 
 #define PI 3.141592653589793238463
 
-using namespace std;
-
 typedef unordered_map<long long, bool> THashMap;
+
+long long coords_to_hash(int a, int b) {
+    long A = a >= 0 ? 2 * a : -2 * a - 1;
+    long B = b >= 0 ? 2 * b : -2 * b - 1;
+    return (A + B) * (A + B + 1) / 2 + A;
+
 
 long long coords_to_hash(int a, int b) {
     long long a_ = a >= 0 ? 2 * a : -2 * a - 1;
@@ -78,7 +82,10 @@ void discover_area(cv::Mat *image, tuple<int, int> seed, THashMap *vc, vector<tu
         int i = get<0>(tmp);
         int j = get<1>(tmp);
         img_area.pop();
-        if (i < image->rows && j < image->cols
+        if (vc->find(coords_to_hash(i, j)) == vc->end()) {
+            continue;
+        }
+        if (i < image.rows && j < image.cols
             && vc->at(coords_to_hash(i, j))
             && image->at<uchar>(i, j) == 255) {
             out_area->push_back(tmp);
@@ -98,13 +105,16 @@ void discover_area(cv::Mat *image, tuple<int, int> seed, THashMap *vc, vector<tu
 }
 
 
-void get_areas(cv::Mat *image, vector<vector<tuple<int, int>>> *max_area) {
-    auto *vc = fill_map(image->rows, image->cols);
-    vector<tuple<int, int>> area;
-    for (int i = 0; i < image->rows; ++i) {
-        for (int j = 0; j < image->cols; ++j) {
-            int intensity = image->at<uchar>(i, j);
-            const long long key = coords_to_hash(i, j);
+vector<vector<tuple<int, int>>> *get_areas(cv::Mat image) {
+    auto *max_area = new vector<vector<tuple<int, int>>>;
+    auto *vc = fill_map(image.rows, image.cols);
+    for (int i = 0; i < image.rows; ++i) {
+        for (int j = 0; j < image.cols; ++j) {
+            int intensity = image.at<uchar>(i, j);
+            auto key = coords_to_hash(i, j);
+            if (vc->find(key) == vc->end()) {
+                continue;
+            }
             if (intensity != 0) {
                 if (vc->at(key)) {
                     area.clear();

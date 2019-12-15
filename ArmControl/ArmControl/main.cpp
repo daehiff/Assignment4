@@ -21,8 +21,25 @@
 #define DEFAULT_PORT "4000"
 #define CAMERA_ID 0
 
+#define GRIPPER_CLOSE 0
+#define GRIPPER_OPEN 1
+
 using namespace std;
 using namespace cv;
+
+struct Pose {
+    int x;
+    int y;
+    int z;
+    int degX;
+    int degY; 
+    int degZ;
+
+    Pose(int x, int y, int z, int degX, int degY, int degZ): x(x), y(y), z(z), degX(degX), degY(degY), degZ(degZ) { };
+    static Pose from_centroid(tuple<double, double, double> centroid, int z) {
+        return Pose(get<0>centroid, get<1>centroid, z, get<2>centroid, 0, 180);
+    }
+};
 
 int sendCommand(char *sendbuf, SOCKET &ClientSocket) {
     cout << "Sending Command: " << sendbuf << endl;
@@ -62,7 +79,55 @@ int sendCommand(char *sendbuf, SOCKET &ClientSocket) {
     return 0;
 }
 
-int __cdecl main(void) {
+int moveArm(SOCKET ClientSocket, Pose pose) {
+  degX = pose.x + 90; // the rotation in robot coords and camera coords is off by 90 degrees
+  cout << "Moving robot to pose: [" << pose.x << ", \t" << pose.y << ", \t" << pose.z
+    << ", \t" << degX << "deg, \t" << pose.degY << "deg, \t" << pose.degZ << "]" << endl;
+
+  char* commandPtr = new char[100];
+  sprintf(commandPtr, "MOVP %d %d %d %d %d %d", pose.x, pose.y, pose.z, degX, pose.degY, pose.degZ);
+
+  char command[100];
+  strcpy(command, commandPtr);
+
+  cout << "Moving arm with command: " << command << endl;
+  sendCommand(command, ClientSocket);
+
+  return 0;
+}
+
+void controlGripper(SOCKET ClientSocket, int action) {
+    char closeCmd[] = "OUTPUT 48 ON";
+    char openCmd[] = "OUTPUT 48 OFF";
+    sendCommand(action == GRIPPER_CLOSE ? closeCmd : openCmd, ClientSocket);
+    Sleep(500);
+}
+
+void goHome(SOCKET ClientSocket) {
+    char cmd[] = "GOHOME";
+    sendCommand(cmd, ClientSocket);
+}
+
+int __cdecl main(int argc, char **argv) {
+    if (argc < 2) {
+        cerr << "usage: hw4 <camera_id> [ <scaling> ]";
+        return 1;
+    }
+
+    // Read camera parameters from file
+    cout << "Reading camera parameters..." << endl;
+    ifstream paramsFile;
+    paramsFile.open("camparams.txt");
+    if (!paramsFile) { cerr << "camparams.txt file is missing."; return 1; }
+    double f_x, f_y, c_x, c_y, k_1, k_2, p_1, p_2, k_3;
+    paramsFile >> f_x >> f_y >> c_x >> c_y >> k_1 >> k_2 >> p_1 >> p_2 >> k_3;
+
+    // Set camera distortion parameters
+    Mat cameraMat = (Mat_<double>(3, 3) << f_x, 0, c_x, 0, f_y, c_y, 0, 0, 1);
+    Mat distCoeffs = (Mat_<double>(5, 1) << k_1, k_2, p_1, p_2, k_3);
+
+    // ---- Robot connetion code
+
     WSADATA wsaData;
     int iResult;
 
@@ -136,38 +201,65 @@ int __cdecl main(void) {
     // No longer need server socket
     closesocket(ListenSocket);
 
-    //========== Add your code below ==========//
+    // Connect to camera
+    cout << "Connecting to camera..." << endl;
+    VideoCapture camera = init_camera(atoi(argv[1]));
+    waitKey(2000);
+    cout << "Connected." << endl;
 
-    // === 1. Read the camera frames and open a window to show it.
-    // === 2. Segment the object(s) and calculate the centroid(s) and principle angle(s).
-    // === 3. Use prespective transform to calculate the desired pose of the arm.
+    // Get scaling
+    Vec2 scaling = (argc >= 3) ? Vec2(-atof(argv[2]),atof(argv[2])) : measure_scaling(&camera);
+    cout << "Scaling factor is [" << scaling.x << ", " << scaling.y << "]" << endl;
 
+    // Read known points
+    int known_points_count;
+    Vec2 *known_points_cam, *known_points_world;
+    read_known_points(&known_points_count, known_points_cam, known_points_world);
 
+    Vec2 camera_orig_world = estimate_origin(known_points_cam, known_points_world, 
+        known_points_count, scaling);
 
-    // [note] David will include his magic✨🦄 code here to get
-    //        from camera frame to the world frame
+    cout << "Assuming the camera origin [0, 0] is at [" <<
+        camera_orig_world.x << ", " << camera_orig_world.y << "] in robot space." << endl;
 
+    perform_sanity_check(known_points_count, known_points_cam, known_points_world, scaling, camera_orig_world);
 
+    Mat frame = get_camera_frame(camera);
 
-    // === 4. Move the arm to the grasping pose by sendCommand() function.
+    // Undistort & convert the image
+    Mat work_image = undistort_camera_frame(frame, cameraMat, distCoeffs);
+    cvtColor(work_image, work_image, COLOR_BGR2GRAY);
 
-    // The following lines give an example of how to send a command.
-    // You can find commends in "Robot Arm Manual.pdf"
-    char command[] = "GOHOME";
-    sendCommand(command, ClientSocket);
+    // Get centroids
+    vector<tuple<double, double, double>> centroids;
+    get_centroids(work_image, &centroids);
 
+    // Display debug information on the screen
+    cvtColor(work_image, work_image, COLOR_GRAY2RGB);
+    display_points(work_image, centroids, scaling, camera_orig_world);
+    imshow("Results", work_image);
+    waitKey(500);
 
+    // Read which centroid to pick up
+    int pickup_id;
+    cout << "Select an object to pick up:" << endl;
+    cin >> pickup_id;
 
-    // 5. Control the gripper to grasp the object.
-    // The following lines give an example of how to control the gripper.
-    char closeGripper[] = "OUTPUT 48 ON";
-    sendCommand(closeGripper, ClientSocket);
+    if (pickup_id < 0 || pickup_id >= centroids.size()) {
+        cerr << pickup_id << " is out of the range of objects." << endl;
+        return 1;
+    }
+
+    cout >> "Picking up block ID " >> pickup_id >> endl;
+
+    // ------- Robot logic
+
+    goHome();
+    controlGripper(ClientSocket, GRIPPER_OPEN);
+    moveArm(ClientSocket, Pose.from_centroid(centroids[pickup_id], -210);
+    controlGripper(ClientSocket, GRIPPER_CLOSE);
     Sleep(1000);
-    char openGripper[] = "OUTPUT 48 OFF";
-    sendCommand(openGripper, ClientSocket);
-
-    //========== Add your code above ==========//
-
+    controlGripper(ClientSocket, GRIPPER_OPEN);
     system("pause");
 
     // shutdown the connection since we're done
