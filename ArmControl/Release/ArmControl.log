@@ -1,0 +1,30 @@
+﻿Build started 2019/12/15 下午 09:28:25.
+     1>Project "C:\Documents and Settings\q300\桌面\robotics_Assignment_4\ArmControl\ArmControl.vcxproj" on node 2 (build target(s)).
+     1>InitializeBuildStatus:
+         Touching "Release\ArmControl.unsuccessfulbuild".
+       ClCompile:
+         C:\Program Files\Microsoft Visual Studio 10.0\VC\bin\CL.exe /c /IC:\opencv\build\include\opencv2 /IC:\opencv\build\include\opencv /IC:\opencv\build\include /Zi /nologo /W3 /WX- /O2 /Oi /Oy- /GL /D WIN32 /D NDEBUG /D _CONSOLE /D _UNICODE /D UNICODE /Gm- /EHsc /MD /GS /Gy /fp:precise /Zc:wchar_t /Zc:forScope /Fo"Release\\" /Fd"Release\vc100.pdb" /Gd /TP /analyze- /errorReport:prompt main.cpp
+         main.cpp
+     1>main.cpp(89): warning C4996: 'sprintf': This function or variable may be unsafe. Consider using sprintf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+                 C:\Program Files\Microsoft Visual Studio 10.0\VC\include\stdio.h(371) : 請參閱 'sprintf' 的宣告
+     1>main.cpp(92): warning C4996: 'strcpy': This function or variable may be unsafe. Consider using strcpy_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+                 C:\Program Files\Microsoft Visual Studio 10.0\VC\include\string.h(105) : 請參閱 'strcpy' 的宣告
+     1>main.cpp(261): error C2552: 'pickup_ids' : 非彙總無法以初始設定式清單初始化
+                 'std::vector<_Ty>' : 有基底的型別無法彙總
+                 with
+                 [
+                     _Ty=int
+                 ]
+     1>main.cpp(263): error C2065: 'pickup_id' : 未宣告的識別項
+     1>main.cpp(263): error C2065: 'pickup_id' : 未宣告的識別項
+     1>main.cpp(264): error C2065: 'pickup_id' : 未宣告的識別項
+     1>main.cpp(268): error C2065: 'pickup_id' : 未宣告的識別項
+     1>main.cpp(274): error C2065: 'pickup_id' : 未宣告的識別項
+     1>main.cpp(274): error C2512: 'Pose' : 沒有適當的預設建構函式
+     1>main.cpp(277): error C2065: 'pickup_id' : 未宣告的識別項
+     1>main.cpp(277): error C2512: 'Pose' : 沒有適當的預設建構函式
+     1>Done Building Project "C:\Documents and Settings\q300\桌面\robotics_Assignment_4\ArmControl\ArmControl.vcxproj" (build target(s)) -- FAILED.
+
+Build FAILED.
+
+Time Elapsed 00:00:01.34
